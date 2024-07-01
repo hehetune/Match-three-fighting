@@ -1,49 +1,46 @@
 ﻿using System.Collections;
 using Patterns.ObserverPattern;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 public enum DotType
 {
-    Red = 0,
-    Blue = 1,
-    Yellow = 2,
-    Purple = 3,
+    Sword = 0,
+    Hp = 1,
+    Mana = 2,
+    Energy = 3,
+    Gold = 4,
+    Exp = 5,
 }
 
-public enum DotState
+public class Dot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IObserver
 {
-    Idle = 0,
-    Moving = 1,
-}
+    [Header("Board")] public BoardManager boardManager;
 
-public class Dot : MonoBehaviour, IObserver
-{
-    [Header("Board")]
-    public BoardManager boardManager;
-
-    [Header("Interact")]
-    private Vector2 _firstTouchPosition;
+    [Header("Interact")] private Vector2 _firstTouchPosition;
     private Vector2 _finalTouchPosition;
 
-    [Header("Swipe")]
-    public float swipeAngle;
+    [Header("Swipe")] public float swipeAngle;
     public float swipeResist = .5f;
 
-    [Header("Dots around")] public Dot upDot;
-    public Dot downDot;
-    public Dot leftDot;
-    public Dot rightDot;
-    
-    [Header("Dot properties")]
-    public int col;
-    public int row;
-    public DotType dotType;
+    [Header("Node")] public Node currentNode;
 
-    public Vector3 targetPosition;
+    [Header("Dot properties")] public DotType dotType;
 
-    public bool isMatch = false;
-    
+    private Image _image;
+
+    private RectTransform _rect;
+    public RectTransform RectTransform
+    {
+        get
+        {
+            if (!_rect) _rect = gameObject.GetComponent<RectTransform>();
+            return _rect;
+        }
+    }
+
     private void OnEnable()
     {
         RegisterEvents();
@@ -56,27 +53,38 @@ public class Dot : MonoBehaviour, IObserver
 
     private void RegisterEvents()
     {
-        Subject.Register(this, EventKey.DotExplode);
+        Subject.Register(this, EventKey.DotUpdatePosition);
     }
         
     private void UnregisterEvents()
     {
-        Subject.Unregister(this, EventKey.DotExplode);
+        Subject.Unregister(this, EventKey.DotUpdatePosition);
     }
 
-    private void OnMouseDown()
+
+    public void SetDotType(DotType dotType)
     {
-        if (GameManager.Instance.CurrentState == GameState.Move)
+        this.dotType = dotType;
+        if (!_image) _image = gameObject.GetComponent<Image>();
+        _image.sprite = ResourceUtil.Ins.GetSpriteByDotType(this.dotType);
+    }
+
+    // public bool isMatch = false;
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        Debug.Log("OnMouseDown1");
+        if (GameManager.Ins.CurrentState == GameState.Move)
         {
-            _firstTouchPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Debug.Log("OnMouseDown2");
+            _firstTouchPosition = Input.mousePosition;
         }
     }
 
-    private void OnMouseUp()
+    public void OnPointerUp(PointerEventData eventData)
     {
-        if (GameManager.Instance.CurrentState == GameState.Move)
+        if (GameManager.Ins.CurrentState == GameState.Move)
         {
-            _finalTouchPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            _finalTouchPosition = Input.mousePosition;
             CalculateAngle();
         }
     }
@@ -86,35 +94,54 @@ public class Dot : MonoBehaviour, IObserver
         if (Mathf.Abs(_finalTouchPosition.y - _firstTouchPosition.y) > swipeResist ||
             Mathf.Abs(_finalTouchPosition.x - _firstTouchPosition.x) > swipeResist)
         {
-            GameManager.Instance.CurrentState = GameState.Wait;
+            Debug.Log("GameManager.Ins.CurrentState = GameState.Wait;");
+            GameManager.Ins.CurrentState = GameState.Wait;
             swipeAngle = Mathf.Atan2(_finalTouchPosition.y - _firstTouchPosition.y,
-                                     _finalTouchPosition.x - _firstTouchPosition.x) * 180 / Mathf.PI;
+                _finalTouchPosition.x - _firstTouchPosition.x) * 180 / Mathf.PI;
 
             HandleSwipe();
         }
         else
         {
-            GameManager.Instance.CurrentState = GameState.Move;
+            GameManager.Ins.CurrentState = GameState.Move;
+            Debug.Log("GameManager.Ins.CurrentState = GameState.Move;");
         }
     }
 
-    public void MoveToNode(Vector3 targetPosition)
+    // public void MoveToNode(Node targetNode)
+    // {
+    //     ChangeNode(targetNode);        
+    //     UpdatePosition();
+    // }
+
+    public void ChangeNode(Node targetNode)
     {
-        boardManager.OnDotStartMoving();
-        this.targetPosition = targetPosition;
-        StartCoroutine(MoveToPositionCoroutine());
+        currentNode = targetNode;
+        targetNode.currentDot = this;
+        transform.SetParent(targetNode.transform, true);
     }
 
     private IEnumerator MoveToPositionCoroutine()
     {
-        while (Vector2.Distance(transform.position, targetPosition) > 0.1f)
+        boardManager.OnDotStartMoving();
+        Debug.Log("Dot Start Move at " + Time.time + " , local Position: "+ _rect.position);
+        
+        Vector3 targetPosition = currentNode.RectTransform.position;
+        while (Mathf.Abs(RectTransform.position.x - targetPosition.x) > 0.1f || Mathf.Abs(RectTransform.position.y - targetPosition.y) > 0.1f)
         {
-            transform.position = Vector2.Lerp(transform.position, targetPosition, 0.2f);
+            RectTransform.position = Vector3.Lerp(RectTransform.position, targetPosition, 0.2f);
             yield return null;
         }
 
-        transform.position = targetPosition;
+        RectTransform.position = targetPosition;
         boardManager.OnDotStopMoving();
+        Debug.Log("Dot Stop Move at " + Time.time);
+    }
+
+    public void UpdatePosition()
+    {
+        if (RectTransform.position == currentNode.RectTransform.position) return;
+        StartCoroutine(MoveToPositionCoroutine());
     }
 
     private void HandleSwipe()
@@ -140,13 +167,13 @@ public class Dot : MonoBehaviour, IObserver
 
         boardManager.MovePiece(this, direction);
     }
-
+    
     public void OnNotify(EventKey key)
     {
         switch (key)
         {
-            case EventKey.DotExplode:
-                gameObject.SetActive(false);
+            case EventKey.DotUpdatePosition:
+                UpdatePosition();
                 break;
             default: break;
         }
