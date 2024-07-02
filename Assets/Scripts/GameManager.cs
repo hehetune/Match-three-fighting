@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using Manager;
+using UnityEngine;
+using UnityEngine.Serialization;
 
 public enum GameState
 {
@@ -12,9 +15,35 @@ public enum GameState
 public class GameManager : MonoBehaviour
 {
     public static GameManager Ins;
-    [Header("Game state")] public GameState CurrentState = GameState.Move;
+    public UIManager uiManager;
+    [Header("Game state")] private GameState _currentState = GameState.Move;
+    public GameState CurrentState => _currentState;
 
     public BoardManager boardManager;
+
+    private bool _isPlayerTurn = true;
+
+    public bool IsPlayerTurn
+    {
+        get => _isPlayerTurn;
+    }
+
+    public void ReceiveMatchResult(List<MatchResult> results)
+    {
+        ToggleTurn();
+    }
+
+    public void ToggleTurn()
+    {
+        _isPlayerTurn = !_isPlayerTurn;
+        _currentState = GameState.Move;
+        uiManager.UpdateUIByTurn(_isPlayerTurn);
+    }
+
+    public void StartTurn()
+    {
+        _currentState = GameState.Wait;
+    }
 
     private void Awake()
     {
@@ -31,6 +60,6 @@ public class GameManager : MonoBehaviour
 
     private void Reset()
     {
-        CurrentState = GameState.Move;
+        _currentState = GameState.Move;
     }
 }

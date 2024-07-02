@@ -5,23 +5,37 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+public class MatchResult
+{
+    public int numberHp;
+    public int numberSword;
+    public int numberMana;
+    public int numberEnergy;
+    public int numberGold;
+    public int numberExp;
+
+    public int totalMatchTiles;
+    public int maxTilesOnLine;
+}
+
 public class BoardManager : MonoBehaviour
 {
     [Header("Board Size")] public int width;
     public int height;
-    public float cellSize;
 
-    [Header("Nodes")] public List<Node> AllNodes = new();
+    [Header("Nodes")] public List<Node> allNodes = new();
 
     private Node GetNode(int col, int row)
     {
-        return AllNodes[row * width + col];
+        return allNodes[row * width + col];
     }
 
     [Header("Prefabs")] public Prefab dotPrefab;
 
     //track number of moving dots
-    [SerializeField] private int _dotsMoving = 0;
+    [SerializeField] private int dotsMoving = 0;
+
+    public Prefab smokePrefab;
 
     // public int DotsMoving
     // {
@@ -38,7 +52,7 @@ public class BoardManager : MonoBehaviour
     //     }
     // }
 
-    private HashSet<Dot> _matchDots = new();
+    private readonly HashSet<Dot> _matchDots = new();
     private int[] _dotsExplodeInColumns;
 
     private Dot _firstDot;
@@ -46,7 +60,8 @@ public class BoardManager : MonoBehaviour
 
     private bool _movePerformed = false;
 
-    private List<DotType> possibleDots = new();
+    private readonly List<DotType> _possibleDots = new();
+    private List<MatchResult> cacheResult = new();
 
     private void Awake()
     {
@@ -57,21 +72,21 @@ public class BoardManager : MonoBehaviour
     public void Initialize()
     {
         SpawnDots();
-        _dotsMoving = 0;
+        dotsMoving = 0;
     }
 
     private void FillNodeIndexes()
     {
-        for (int i = 0; i < AllNodes.Count; i++)
+        for (int i = 0; i < allNodes.Count; i++)
         {
-            AllNodes[i].col = i % width;
-            AllNodes[i].row = i / height;
+            allNodes[i].col = i % width;
+            allNodes[i].row = i / height;
         }
     }
 
-    public void SpawnDots()
+    private void SpawnDots()
     {
-        foreach (var node in AllNodes)
+        foreach (var node in allNodes)
         {
             if (node.currentDot)
                 node.currentDot.gameObject.GetComponent<PoolObject>().ReturnToPool();
@@ -82,31 +97,31 @@ public class BoardManager : MonoBehaviour
             for (int y = 0; y < height; y++)
             {
                 // Clear the list and add all dot types
-                possibleDots.Clear();
-                possibleDots.AddRange((DotType[])System.Enum.GetValues(typeof(DotType)));
+                _possibleDots.Clear();
+                _possibleDots.AddRange((DotType[])System.Enum.GetValues(typeof(DotType)));
 
                 // Remove the same type as the left neighbor
                 if (x > 1 && GetNode(x - 1, y).currentDot.dotType == GetNode(x - 2, y).currentDot.dotType)
                 {
-                    possibleDots.Remove(GetNode(x - 1, y).currentDot.dotType);
+                    _possibleDots.Remove(GetNode(x - 1, y).currentDot.dotType);
                 }
 
                 // Remove the same type as the bottom neighbor
                 if (y > 1 && GetNode(x, y - 1).currentDot.dotType == GetNode(x, y - 2).currentDot.dotType)
                 {
-                    possibleDots.Remove(GetNode(x, y - 1).currentDot.dotType);
+                    _possibleDots.Remove(GetNode(x, y - 1).currentDot.dotType);
                 }
 
                 Node curNode = GetNode(x, y);
 
                 // Choose a random dot from the possible dots
-                DotType chosenDotType = possibleDots[Random.Range(0, possibleDots.Count)];
+                DotType chosenDotType = _possibleDots[Random.Range(0, _possibleDots.Count)];
 
                 // Instantiate the dot prefab at the correct position
                 PoolManager.Get<PoolObject>(dotPrefab, out var dotGo);
                 dotGo.transform.SetParent(curNode.transform, false);
                 Dot curDot = dotGo.GetComponent<Dot>();
-                curDot.RectTransform.position = curNode.RectTransform.position;
+                curDot.transform.position = curNode.transform.position;
                 curDot.boardManager = this;
                 curDot.SetDotType(chosenDotType);
                 curDot.currentNode = curNode;
@@ -124,22 +139,14 @@ public class BoardManager : MonoBehaviour
         int col = _firstDot.currentNode.col;
         int row = _firstDot.currentNode.row;
 
-        if (!IsValidMove(col, row, direction))
-        {
-            GameManager.Ins.CurrentState = GameState.Move;
-            Debug.Log("GameManager.Ins.CurrentState = GameState.Move;");
-            return;
-        }
+        if (!IsValidMove(col, row, direction)) return;
 
         Node secondNode = GetNode(col + direction.x, row - direction.y);
         _secondDot = secondNode.currentDot;
 
-        if (_secondDot == null)
-        {
-            GameManager.Ins.CurrentState = GameState.Move;
-            Debug.Log("GameManager.Ins.CurrentState = GameState.Move;");
-            return;
-        }
+        if (_secondDot == null) return;
+
+        GameManager.Ins.StartTurn();
 
         SwapDotsAndUpdatePosition(_firstDot, _secondDot);
 
@@ -149,7 +156,6 @@ public class BoardManager : MonoBehaviour
 
     private void OnAllDotsStopMoving()
     {
-        Debug.Log("BoardManager::OnAllDotsStopMoving");
         if (_matchDots.Count > 0)
         {
             ResolveMatches();
@@ -162,30 +168,66 @@ public class BoardManager : MonoBehaviour
         }
         else
         {
-            GameManager.Ins.CurrentState = GameState.Move;
-            Debug.Log("GameManager.Ins.CurrentState = GameState.Move;");
+            GameManager.Ins.ReceiveMatchResult(cacheResult);
+            cacheResult.Clear();
         }
     }
 
     private void ResolveMatches()
     {
         if (_matchDots.Count == 0) return;
+
+        StartCoroutine(ResolveMatchesCoroutine());
+    }
+
+    IEnumerator ResolveMatchesCoroutine()
+    {
         foreach (var dot in _matchDots)
         {
-            Debug.Log(dot.currentNode.col + ", " + dot.currentNode.row);
+            PoolManager.Get<PoolObject>(smokePrefab, out var smokeGo);
+            smokeGo.transform.position = dot.transform.position;
+            smokeGo.GetComponent<PoolObject>().ReturnToPoolByLifeTime(0.5f);
         }
+
+        yield return new WaitForSeconds(0.2f);
+
+        //variables for calculate match result
+        int numberHp = 0, numberSword = 0, numberMana = 0, numberEnergy = 0, numberGold = 0, numberExp = 0;
+
         for (int curCol = 0; curCol < width; curCol++)
         {
             int curRow = height - 1;
-            while (curRow >= 0 && curRow > _dotsExplodeInColumns[curCol] - 1)
+            while (curRow >= 0)
             {
                 Node curNode = GetNode(curCol, curRow);
                 Dot curDot = curNode.currentDot;
-                
+
                 if (_matchDots.Contains(curDot))
                 {
+                    switch (curDot.dotType)
+                    {
+                        case DotType.Hp:
+                            numberHp++;
+                            break;
+                        case DotType.Sword:
+                            numberSword++;
+                            break;
+                        case DotType.Mana:
+                            numberMana++;
+                            break;
+                        case DotType.Energy:
+                            numberEnergy++;
+                            break;
+                        case DotType.Gold:
+                            numberGold++;
+                            break;
+                        case DotType.Exp:
+                            numberExp++;
+                            break;
+                        default: break;
+                    }
+
                     _dotsExplodeInColumns[curCol]++;
-                    curDot.RectTransform.position += Vector3.up * 1000;
                 }
                 else if (_dotsExplodeInColumns[curCol] > 0)
                 {
@@ -196,18 +238,32 @@ public class BoardManager : MonoBehaviour
                 curRow--;
             }
         }
-        
-        //suffle new dots
-        possibleDots.Clear();
-        possibleDots.AddRange((DotType[])System.Enum.GetValues(typeof(DotType)));
+
+        cacheResult.Add(new MatchResult()
+        {
+            numberHp = numberHp, numberSword = numberSword, numberMana = numberMana, numberEnergy = numberEnergy,
+            numberGold = numberGold, numberExp = numberExp, maxTilesOnLine = _maxTilesOnLine,
+            totalMatchTiles = _matchDots.Count
+        });
+
+        //shuffle new dots
+        _possibleDots.Clear();
+        _possibleDots.AddRange((DotType[])System.Enum.GetValues(typeof(DotType)));
 
         foreach (var dot in _matchDots)
         {
-            dot.SetDotType(possibleDots[Random.Range(0, possibleDots.Count)]);
+            dot.SetDotType(_possibleDots[Random.Range(0, _possibleDots.Count)]);
+            dot.transform.position = dot.currentNode.transform.position +
+                                     Vector3.up * _dotsExplodeInColumns[dot.currentNode.col];
         }
-        
+
         Subject.Notify(EventKey.DotUpdatePosition);
         _matchDots.Clear();
+        for (int i = 0; i < width; i++)
+        {
+            _dotsExplodeInColumns[i] = 0;
+        }
+
         CheckMatchAtAllNode();
     }
 
@@ -225,7 +281,7 @@ public class BoardManager : MonoBehaviour
         dot1.ChangeNode(dot2.currentNode);
         dot2.ChangeNode(dot1Node);
     }
-    
+
     private void SwapDotsAndUpdatePosition(Dot dot1, Dot dot2)
     {
         SwapDots(dot1, dot2);
@@ -235,149 +291,90 @@ public class BoardManager : MonoBehaviour
 
     public void OnDotStopMoving()
     {
-        if (_dotsMoving == 1)
+        if (dotsMoving == 1)
         {
             OnAllDotsStopMoving();
         }
 
-        _dotsMoving--;
+        dotsMoving--;
     }
 
-    public void OnDotStartMoving() => _dotsMoving += 1;
-    
+    public void OnDotStartMoving() => dotsMoving += 1;
+
     private int numberOfCheck = 0;
 
     private void CheckMatchAtAllNode()
     {
         numberOfCheck = 0;
-        foreach (var node in AllNodes)
+        foreach (var node in allNodes)
         {
             CheckMatchAtNode(node);
         }
+
         Debug.Log("Number of check: " + numberOfCheck);
     }
+
+    private int _maxTilesOnLine = 0;
 
     private void CheckMatchAtNode(Node node)
     {
         if (node == null || _matchDots.Contains(node.currentDot))
             return;
+
         numberOfCheck++;
-        int col = node.col;
-        int row = node.row;
-        DotType dotType = node.currentDot.dotType; // Replace GemType with your actual enum or type for gem types
+        DotType dotType = node.currentDot.dotType;
         List<Dot> cacheDots = new List<Dot> { node.currentDot };
 
-        // Check horizontally
-        int matchCount = 1;
-        // Check to the left
-        for (int c = col - 1; c >= 0; c--)
-        {
-            Node leftNode = GetNode(c, row);
-            if (leftNode.currentDot != null && leftNode.currentDot.dotType == dotType)
-            {
-                matchCount++;
-                if (matchCount < 3)
-                {
-                    cacheDots.Add(leftNode.currentDot);
-                }
-                else
-                {
-                    _matchDots.Add(leftNode.currentDot);
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        // Check to the right
-        for (int c = col + 1; c < width; c++)
-        {
-            Node rightNode = GetNode(c, row);
-            if (rightNode.currentDot != null && rightNode.currentDot.dotType == dotType)
-            {
-                matchCount++;
-                if (matchCount < 3)
-                {
-                    cacheDots.Add(rightNode.currentDot);
-                }
-                else
-                {
-                    _matchDots.Add(rightNode.currentDot);
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
+        int matchCount = CheckDirection(node, dotType, 0, -1, cacheDots) + // Left
+            CheckDirection(node, dotType, 0, 1, cacheDots) - 1; // Right
 
         if (matchCount >= 3)
         {
-            foreach (var cacheDot in cacheDots)
-            {
-                _matchDots.Add(cacheDot);
-            }
+            _maxTilesOnLine = matchCount;
+            _matchDots.AddRange(cacheDots);
         }
 
         cacheDots.Clear();
         cacheDots.Add(node.currentDot);
 
-        // Check vertically
-        matchCount = 1;
-        // Check below
-        for (int r = row - 1; r >= 0; r--)
-        {
-            Node belowNode = GetNode(col, r);
-            if (belowNode.currentDot != null && belowNode.currentDot.dotType == dotType)
-            {
-                matchCount++;
-                if (matchCount < 3)
-                {
-                    cacheDots.Add(belowNode.currentDot);
-                }
-                else
-                {
-                    _matchDots.Add(belowNode.currentDot);
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        // Check above
-        for (int r = row + 1; r < height; r++)
-        {
-            Node aboveNode = GetNode(col, r);
-            if (aboveNode.currentDot != null && aboveNode.currentDot.dotType == dotType)
-            {
-                matchCount++;
-                if (matchCount < 3)
-                {
-                    cacheDots.Add(aboveNode.currentDot);
-                }
-                else
-                {
-                    _matchDots.Add(aboveNode.currentDot);
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
+        matchCount = CheckDirection(node, dotType, -1, 0, cacheDots) + // Below
+            CheckDirection(node, dotType, 1, 0, cacheDots) - 1; // Above
 
         if (matchCount >= 3)
         {
-            foreach (var cacheDot in cacheDots)
+            _maxTilesOnLine = Mathf.Max(_maxTilesOnLine, matchCount);
+            _matchDots.AddRange(cacheDots);
+        }
+    }
+
+    private int CheckDirection(Node node, DotType dotType, int rowOffset, int colOffset, List<Dot> cacheDots)
+    {
+        int matchCount = 1;
+        int row = node.row + rowOffset;
+        int col = node.col + colOffset;
+
+        while (IsValidPosition(row, col))
+        {
+            Node currentNode = GetNode(col, row);
+            if (currentNode.currentDot != null && currentNode.currentDot.dotType == dotType)
             {
-                _matchDots.Add(cacheDot);
+                matchCount++;
+                cacheDots.Add(currentNode.currentDot);
             }
+            else
+            {
+                break;
+            }
+
+            row += rowOffset;
+            col += colOffset;
         }
 
-        Debug.Log("BoardManager::CheckMatchAtDot Done check");
+        return matchCount;
+    }
+
+    private bool IsValidPosition(int row, int col)
+    {
+        return row >= 0 && row < height && col >= 0 && col < width;
     }
 }

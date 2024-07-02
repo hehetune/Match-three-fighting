@@ -15,7 +15,7 @@ public enum DotType
     Exp = 5,
 }
 
-public class Dot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IObserver
+public class Dot : MonoBehaviour, IObserver
 {
     [Header("Board")] public BoardManager boardManager;
 
@@ -28,18 +28,19 @@ public class Dot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IObser
     [Header("Node")] public Node currentNode;
 
     [Header("Dot properties")] public DotType dotType;
+    public float movingSpeed = 1;
 
-    private Image _image;
+    private SpriteRenderer _image;
 
-    private RectTransform _rect;
-    public RectTransform RectTransform
-    {
-        get
-        {
-            if (!_rect) _rect = gameObject.GetComponent<RectTransform>();
-            return _rect;
-        }
-    }
+    // private RectTransform _rect;
+    // public RectTransform RectTransform
+    // {
+    //     get
+    //     {
+    //         if (!_rect) _rect = gameObject.GetComponent<RectTransform>();
+    //         return _rect;
+    //     }
+    // }
 
     private void OnEnable()
     {
@@ -65,24 +66,25 @@ public class Dot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IObser
     public void SetDotType(DotType dotType)
     {
         this.dotType = dotType;
-        if (!_image) _image = gameObject.GetComponent<Image>();
-        _image.sprite = ResourceUtil.Ins.GetSpriteByDotType(this.dotType);
+        if (!_image) _image = gameObject.GetComponent<SpriteRenderer>();
+        _image.sprite = ResourceUtil.Ins.GetSpriteByDotType(dotType);
     }
 
     // public bool isMatch = false;
-    public void OnPointerDown(PointerEventData eventData)
+    public void OnMouseDown()
     {
-        Debug.Log("OnMouseDown1");
-        if (GameManager.Ins.CurrentState == GameState.Move)
+        Debug.Log("on mouse down");
+        if (GameManager.Ins.CurrentState == GameState.Move && GameManager.Ins.IsPlayerTurn)
         {
-            Debug.Log("OnMouseDown2");
             _firstTouchPosition = Input.mousePosition;
         }
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public void OnMouseUp()
     {
-        if (GameManager.Ins.CurrentState == GameState.Move)
+        Debug.Log("on mouse up");
+
+        if (GameManager.Ins.CurrentState == GameState.Move && GameManager.Ins.IsPlayerTurn)
         {
             _finalTouchPosition = Input.mousePosition;
             CalculateAngle();
@@ -94,17 +96,11 @@ public class Dot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IObser
         if (Mathf.Abs(_finalTouchPosition.y - _firstTouchPosition.y) > swipeResist ||
             Mathf.Abs(_finalTouchPosition.x - _firstTouchPosition.x) > swipeResist)
         {
-            Debug.Log("GameManager.Ins.CurrentState = GameState.Wait;");
-            GameManager.Ins.CurrentState = GameState.Wait;
+            
             swipeAngle = Mathf.Atan2(_finalTouchPosition.y - _firstTouchPosition.y,
                 _finalTouchPosition.x - _firstTouchPosition.x) * 180 / Mathf.PI;
 
             HandleSwipe();
-        }
-        else
-        {
-            GameManager.Ins.CurrentState = GameState.Move;
-            Debug.Log("GameManager.Ins.CurrentState = GameState.Move;");
         }
     }
 
@@ -124,23 +120,23 @@ public class Dot : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IObser
     private IEnumerator MoveToPositionCoroutine()
     {
         boardManager.OnDotStartMoving();
-        Debug.Log("Dot Start Move at " + Time.time + " , local Position: "+ _rect.position);
-        
-        Vector3 targetPosition = currentNode.RectTransform.position;
-        while (Mathf.Abs(RectTransform.position.x - targetPosition.x) > 0.1f || Mathf.Abs(RectTransform.position.y - targetPosition.y) > 0.1f)
+    
+        Vector3 targetPosition = currentNode.transform.position;
+        float step = movingSpeed * 0.2f;
+    
+        while (Mathf.Abs(transform.position.x - targetPosition.x) > 0.005f || Mathf.Abs(transform.position.y - targetPosition.y) > 0.005f)
         {
-            RectTransform.position = Vector3.Lerp(RectTransform.position, targetPosition, 0.2f);
+            transform.position = Vector3.Lerp(transform.position, targetPosition, step);
             yield return null;
         }
 
-        RectTransform.position = targetPosition;
+        transform.position = targetPosition;
         boardManager.OnDotStopMoving();
-        Debug.Log("Dot Stop Move at " + Time.time);
     }
 
     public void UpdatePosition()
     {
-        if (RectTransform.position == currentNode.RectTransform.position) return;
+        if (transform.position == currentNode.transform.position) return;
         StartCoroutine(MoveToPositionCoroutine());
     }
 

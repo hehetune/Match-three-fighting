@@ -9,13 +9,13 @@ public class Node : MonoBehaviour
     public int col;
     public int row;
     
-    private RectTransform _rect;
-    public RectTransform RectTransform
-    {
-        get
-        {
-            if (!_rect) _rect = gameObject.GetComponent<RectTransform>();
-            return _rect;
-        }
-    }
+    // private RectTransform _rect;
+    // public RectTransform RectTransform
+    // {
+    //     get
+    //     {
+    //         if (!_rect) _rect = gameObject.GetComponent<RectTransform>();
+    //         return _rect;
+    //     }
+    // }
 }
