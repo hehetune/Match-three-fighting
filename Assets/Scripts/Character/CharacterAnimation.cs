@@ -5,30 +5,44 @@ namespace Character
     public class CharacterAnimator : MonoBehaviour
     {
         private Animator _animator;
-        private static readonly int AttackAnimKey = Animator.StringToHash("Attack");
-        private static readonly int DamageAnimKey = Animator.StringToHash("Damage");
-        private static readonly int DeathAnimKey = Animator.StringToHash("Death");
+        private static readonly int IdleAnimKey = Animator.StringToHash("Idle");
+        private static readonly int SlideAnimKey = Animator.StringToHash("Slide");
+        private static readonly int NormalAttackAnimKey = Animator.StringToHash("NormalAttack");
+        private static readonly int HurtAnimKey = Animator.StringToHash("Hurt");
+        private static readonly int DieAnimKey = Animator.StringToHash("Die");
+
+        public float normalAttackDelay;
+        public float normalAttackDuration;
 
         private void Awake()
         {
             _animator = GetComponent<Animator>();
         }
 
-        public void PlayAttackAnimation()
+        public void PlayIdleAnimation()
         {
-            _animator.SetTrigger(AttackAnimKey);
+            _animator.SetTrigger(IdleAnimKey);
+        }
+        
+        public void PlaySlideAnimation()
+        {
+            _animator.SetTrigger(SlideAnimKey);
         }
 
-        public void PlayDamageAnimation()
+        public void PlayNormalAttackAnimation()
         {
-            _animator.SetTrigger(DamageAnimKey);
+            _animator.SetTrigger(NormalAttackAnimKey);
         }
 
-        public void PlayDeathAnimation()
+        public void PlayHurtAnimation()
         {
-            _animator.SetTrigger(DeathAnimKey);
+            _animator.SetTrigger(HurtAnimKey);
         }
 
-        // Add other animation methods as needed
+        public void PlayDieAnimation()
+        {
+            _animator.SetTrigger(DieAnimKey);
+        }
+
     }
 }
