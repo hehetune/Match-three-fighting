@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using Character;
+using UnityEngine;
 
 namespace Battle
 {
@@ -17,6 +20,7 @@ namespace Battle
         private CharacterBattle enemyCharacterBattle;
         private CharacterBattle activeCharacterBattle;
         private State state;
+        private int bonusRounds = 0;
 
         public BattleUI battleUI;
 
@@ -40,29 +44,65 @@ namespace Battle
             state = State.WaitingForPlayer;
         }
 
-        private void Update()
+        public bool CanPlayerAction()
         {
-            if (state == State.WaitingForPlayer)
+            return activeCharacterBattle == playerCharacterBattle && state != State.Busy;
+        }
+
+        public void SetStateBusy() => state = State.Busy;
+
+        public void PerformPlayerTurn(MatchResult result)
+        {
+            PerformPlayerAction(result, activeCharacterBattle,
+                activeCharacterBattle == playerCharacterBattle ? enemyCharacterBattle : playerCharacterBattle);
+        }
+
+        public void PerformPlayerAction(MatchResult result, CharacterBattle mainCharacter,
+            CharacterBattle targetCharacter)
+        {
+            void ExecuteActionQueue(Queue<Action> actions)
             {
-                if (Input.GetKeyDown(KeyCode.Space))
+                if (actions.Count > 0)
                 {
-                    state = State.Busy;
-                    playerCharacterBattle.Attack(enemyCharacterBattle, () => { ChooseNextActiveCharacter(); });
+                    var action = actions.Dequeue();
+                    action();
+                }
+                else
+                {
+                    ChooseNextActiveCharacter();
                 }
             }
+
+            Queue<Action> actions = new Queue<Action>();
+
+            if (result.numberSword > 0)
+            {
+                actions.Enqueue(() =>
+                    mainCharacter.Attack(result.numberSword, targetCharacter, () => ExecuteActionQueue(actions)));
+            }
+
+            if (result.numberHp > 0)
+            {
+                actions.Enqueue(() => mainCharacter.RestoreHp(result.numberHp, () => ExecuteActionQueue(actions)));
+            }
+
+            if (result.numberMana > 0)
+            {
+                actions.Enqueue(() => mainCharacter.RestoreMana(result.numberMana, () => ExecuteActionQueue(actions)));
+            }
+
+            if (result.numberEnergy > 0)
+            {
+                actions.Enqueue(() =>
+                    mainCharacter.RestoreEnergy(result.numberEnergy, () => ExecuteActionQueue(actions)));
+            }
+
+            ExecuteActionQueue(actions);
         }
 
         private CharacterBattle SpawnCharacter(bool isPlayerTeam)
         {
-            Vector3 position;
-            if (isPlayerTeam)
-            {
-                position = new Vector3(-50, 0);
-            }
-            else
-            {
-                position = new Vector3(+50, 0);
-            }
+            var position = isPlayerTeam ? new Vector3(-50, 0) : new Vector3(+50, 0);
 
             Transform characterTransform = Instantiate(pfCharacterBattle, position, Quaternion.identity);
             CharacterBattle characterBattle = characterTransform.GetComponent<CharacterBattle>();
@@ -73,13 +113,7 @@ namespace Battle
 
         private void SetActiveCharacterBattle(CharacterBattle characterBattle)
         {
-            if (activeCharacterBattle != null)
-            {
-                activeCharacterBattle.HideSelectionCircle();
-            }
-
             activeCharacterBattle = characterBattle;
-            activeCharacterBattle.ShowSelectionCircle();
         }
 
         private void ChooseNextActiveCharacter()
@@ -89,12 +123,20 @@ namespace Battle
                 return;
             }
 
-            if (activeCharacterBattle == playerCharacterBattle)
+            if (bonusRounds > 0)
+            {
+                bonusRounds--;
+                if (activeCharacterBattle == enemyCharacterBattle)
+                {
+                    // TODO: enemy AI action
+                }
+                else state = State.WaitingForPlayer;
+            }
+            else if (activeCharacterBattle == playerCharacterBattle)
             {
                 SetActiveCharacterBattle(enemyCharacterBattle);
+                // TODO: enemy AI action
                 state = State.Busy;
-
-                enemyCharacterBattle.Attack(playerCharacterBattle, () => { ChooseNextActiveCharacter(); });
             }
             else
             {
@@ -108,7 +150,6 @@ namespace Battle
             if (playerCharacterBattle.IsDead())
             {
                 // Player dead, enemy wins
-                //CodeMonkey.CMDebug.TextPopupMouse("Enemy Wins!");
                 BattleOverWindow.Show_Static("Enemy Wins!");
                 return true;
             }
@@ -116,7 +157,6 @@ namespace Battle
             if (enemyCharacterBattle.IsDead())
             {
                 // Enemy dead, player wins
-                //CodeMonkey.CMDebug.TextPopupMouse("Player Wins!");
                 BattleOverWindow.Show_Static("Player Wins!");
                 return true;
             }

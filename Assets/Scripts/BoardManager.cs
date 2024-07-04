@@ -1,21 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
+using Battle;
 using Patterns.ObserverPattern;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+public enum MatchType
+{
+    Four = 0,
+    Five = 1,
+    L = 2,
+    T = 3,
+}
+
 public class MatchResult
 {
-    public int numberHp;
-    public int numberSword;
-    public int numberMana;
-    public int numberEnergy;
-    public int numberGold;
-    public int numberExp;
+    public int numberHp = 0;
+    public int numberSword = 0;
+    public int numberMana = 0;
+    public int numberEnergy = 0;
+    public int numberGold = 0;
+    public int numberExp = 0;
 
-    public int totalMatchTiles;
-    public int maxTilesOnLine;
+    public Dictionary<MatchType, int> matchTypesDic = new();
+    public int bonusRound = 0;
 }
 
 public class BoardManager : MonoBehaviour
@@ -37,21 +46,6 @@ public class BoardManager : MonoBehaviour
 
     public Prefab smokePrefab;
 
-    // public int DotsMoving
-    // {
-    //     get => _dotsMoving;
-    //     set
-    //     {
-    //         Debug.Log("Set DotsMoving: " + value);
-    //         if (_dotsMoving > 0 && value == 0)
-    //         {
-    //             OnAllDotsStopMoving();
-    //         }
-    //
-    //         _dotsMoving = value;
-    //     }
-    // }
-
     private readonly HashSet<Dot> _matchDots = new();
     private int[] _dotsExplodeInColumns;
 
@@ -61,7 +55,9 @@ public class BoardManager : MonoBehaviour
     private bool _movePerformed = false;
 
     private readonly List<DotType> _possibleDots = new();
-    private List<MatchResult> cacheResult = new();
+
+    //cache for result
+    private MatchResult cacheResult = new();
 
     private void Awake()
     {
@@ -146,7 +142,7 @@ public class BoardManager : MonoBehaviour
 
         if (_secondDot == null) return;
 
-        GameManager.Ins.StartTurn();
+        BattleSystem.GetInstance().SetStateBusy();
 
         SwapDotsAndUpdatePosition(_firstDot, _secondDot);
 
@@ -168,8 +164,8 @@ public class BoardManager : MonoBehaviour
         }
         else
         {
-            GameManager.Ins.ReceiveMatchResult(cacheResult);
-            cacheResult.Clear();
+            BattleSystem.GetInstance().PerformPlayerTurn(cacheResult);
+            cacheResult = new();
         }
     }
 
@@ -239,12 +235,12 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        cacheResult.Add(new MatchResult()
-        {
-            numberHp = numberHp, numberSword = numberSword, numberMana = numberMana, numberEnergy = numberEnergy,
-            numberGold = numberGold, numberExp = numberExp, maxTilesOnLine = _maxTilesOnLine,
-            totalMatchTiles = _matchDots.Count
-        });
+        cacheResult.numberHp += numberHp;
+        cacheResult.numberSword += numberSword;
+        cacheResult.numberMana += numberMana;
+        cacheResult.numberEnergy += numberEnergy;
+        cacheResult.numberGold += numberGold;
+        cacheResult.numberExp += numberExp;
 
         //shuffle new dots
         _possibleDots.Clear();
@@ -325,25 +321,54 @@ public class BoardManager : MonoBehaviour
         DotType dotType = node.currentDot.dotType;
         List<Dot> cacheDots = new List<Dot> { node.currentDot };
 
-        int matchCount = CheckDirection(node, dotType, 0, -1, cacheDots) + // Left
-            CheckDirection(node, dotType, 0, 1, cacheDots) - 1; // Right
+        int left = CheckDirection(node, dotType, 0, -1, cacheDots);
+        int right = CheckDirection(node, dotType, 0, 1, cacheDots) - 1;
+        int horizontalCount = left + right;
 
-        if (matchCount >= 3)
+        if (horizontalCount >= 3)
         {
-            _maxTilesOnLine = matchCount;
+            _maxTilesOnLine = horizontalCount;
             _matchDots.AddRange(cacheDots);
         }
 
         cacheDots.Clear();
         cacheDots.Add(node.currentDot);
 
-        matchCount = CheckDirection(node, dotType, -1, 0, cacheDots) + // Below
-            CheckDirection(node, dotType, 1, 0, cacheDots) - 1; // Above
+        int below = CheckDirection(node, dotType, -1, 0, cacheDots);
+        int above = CheckDirection(node, dotType, 1, 0, cacheDots) - 1;
+        int verticalCount = below + above;
 
-        if (matchCount >= 3)
+        if (verticalCount >= 3)
         {
-            _maxTilesOnLine = Mathf.Max(_maxTilesOnLine, matchCount);
+            _maxTilesOnLine = Mathf.Max(_maxTilesOnLine, verticalCount);
             _matchDots.AddRange(cacheDots);
+        }
+
+        if (horizontalCount >= 4 || verticalCount >= 4)
+        {
+            cacheResult.bonusRound++;
+        }
+
+        if (horizontalCount >= 3 && verticalCount >= 3)
+        {
+            if ((left > 0 && right > 0) || (below > 0 && above > 0))
+            {
+                if (!cacheResult.matchTypesDic.TryAdd(MatchType.T, 1)) cacheResult.matchTypesDic[MatchType.T]++;
+            }
+            else
+            {
+                if (!cacheResult.matchTypesDic.TryAdd(MatchType.L, 1)) cacheResult.matchTypesDic[MatchType.L]++;
+            }
+        }
+
+        if (horizontalCount >= 5 || verticalCount >= 5)
+        {
+            if (!cacheResult.matchTypesDic.TryAdd(MatchType.Five, 1)) cacheResult.matchTypesDic[MatchType.Five]++;
+        }
+
+        else if (horizontalCount >= 4 || verticalCount >= 4)
+        {
+            if (!cacheResult.matchTypesDic.TryAdd(MatchType.Four, 1)) cacheResult.matchTypesDic[MatchType.Four]++;
         }
     }
 

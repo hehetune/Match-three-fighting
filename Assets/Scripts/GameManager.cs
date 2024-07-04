@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
-using Manager;
+using Battle;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 public enum GameState
 {
-    Wait,
-    Move,
+    // Wait,
+    // Move,
+    Playing,
     Win,
     Lose,
     Pause,
@@ -15,35 +16,12 @@ public enum GameState
 public class GameManager : MonoBehaviour
 {
     public static GameManager Ins;
-    public UIManager uiManager;
-    [Header("Game state")] private GameState _currentState = GameState.Move;
+    
+    [Header("Game state")] private GameState _currentState = GameState.Playing;
     public GameState CurrentState => _currentState;
 
     public BoardManager boardManager;
-
-    private bool _isPlayerTurn = true;
-
-    public bool IsPlayerTurn
-    {
-        get => _isPlayerTurn;
-    }
-
-    public void ReceiveMatchResult(List<MatchResult> results)
-    {
-        ToggleTurn();
-    }
-
-    public void ToggleTurn()
-    {
-        _isPlayerTurn = !_isPlayerTurn;
-        _currentState = GameState.Move;
-        uiManager.UpdateUIByTurn(_isPlayerTurn);
-    }
-
-    public void StartTurn()
-    {
-        _currentState = GameState.Wait;
-    }
+    public BattleSystem battleSystem;
 
     private void Awake()
     {
@@ -60,6 +38,8 @@ public class GameManager : MonoBehaviour
 
     private void Reset()
     {
-        _currentState = GameState.Move;
+        _currentState = GameState.Playing;
     }
+    
+    
 }

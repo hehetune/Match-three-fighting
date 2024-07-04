@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using CodeMonkey.Utils;
 
-public class CharacterBattle : MonoBehaviour {
+public class CharacterBattlee : MonoBehaviour {
 
     private Character_Base characterBase;
     private State state;
@@ -95,7 +95,7 @@ public class CharacterBattle : MonoBehaviour {
         return transform.position;
     }
 
-    public void Damage(CharacterBattle attacker, int damageAmount) {
+    public void Damage(CharacterBattlee attacker, int damageAmount) {
         healthSystem.Damage(damageAmount);
         //CodeMonkey.CMDebug.TextPopup("Hit " + healthSystem.GetHealthAmount(), GetPosition());
         Vector3 dirFromAttacker = (GetPosition() - attacker.GetPosition()).normalized;
@@ -116,19 +116,19 @@ public class CharacterBattle : MonoBehaviour {
         return healthSystem.IsDead();
     }
 
-    public void Attack(CharacterBattle targetCharacterBattle, Action onAttackComplete) {
-        Vector3 slideTargetPosition = targetCharacterBattle.GetPosition() + (GetPosition() - targetCharacterBattle.GetPosition()).normalized * 10f;
+    public void Attack(CharacterBattlee targetCharacterBattlee, Action onAttackComplete) {
+        Vector3 slideTargetPosition = targetCharacterBattlee.GetPosition() + (GetPosition() - targetCharacterBattlee.GetPosition()).normalized * 10f;
         Vector3 startingPosition = GetPosition();
 
         // Slide to Target
         SlideToPosition(slideTargetPosition, () => {
             // Arrived at Target, attack him
             state = State.Busy;
-            Vector3 attackDir = (targetCharacterBattle.GetPosition() - GetPosition()).normalized;
+            Vector3 attackDir = (targetCharacterBattlee.GetPosition() - GetPosition()).normalized;
             characterBase.PlayAnimAttack(attackDir, () => {
                 // Target hit
                 int damageAmount = UnityEngine.Random.Range(20, 50);
-                targetCharacterBattle.Damage(this, damageAmount);
+                targetCharacterBattlee.Damage(this, damageAmount);
                 }, () => {
                 // Attack completed, slide back
                 SlideToPosition(startingPosition, () => {

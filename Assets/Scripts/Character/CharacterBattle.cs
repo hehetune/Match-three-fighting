@@ -19,6 +19,17 @@ namespace Character
         private Action onSlideComplete;
         private bool isPlayerTeam;
         private CharacterHealth characterHealth;
+        private CharacterMana characterMana;
+        private CharacterEnergy characterEnergy;
+
+        [SerializeField] private int attackBase;
+        [SerializeField] private int hpRestoreBase;
+        [SerializeField] private int manaRestoreBase;
+        [SerializeField] private int energyRestoreBase;
+
+        [SerializeField] private CharacterSkill skill1;
+        [SerializeField] private CharacterSkill skill2;
+        [SerializeField] private CharacterSkill skill3;
         // private World_Bar healthBar;
         
         private void Awake() {
@@ -29,8 +40,12 @@ namespace Character
         public void Setup(bool isPlayerTeam) {
             this.isPlayerTeam = isPlayerTeam;
             characterHealth = new CharacterHealth(100);
+            characterMana = new CharacterMana(90);
+            characterEnergy = new CharacterEnergy(100);
             // healthBar = new World_Bar(transform, new Vector3(0, 10), new Vector3(12, 1.7f), Color.grey, Color.red, 1f, 100, new World_Bar.Outline { color = Color.black, size = .6f });
-            characterHealth.OnHealthChanged += OnCharacterHealthChanged;
+            characterHealth.OnValueChanged += OnCharacterHealthChanged;
+            characterMana.OnValueChanged += OnCharacterManaChanged;
+            characterEnergy.OnValueChanged += OnCharacterEnergyChanged;
 
             PlayAnimIdle();
         }
@@ -58,12 +73,42 @@ namespace Character
         private void OnCharacterHealthChanged(float value) {
             // BattleSystem.GetInstance().battleUI.
         }
+        private void OnCharacterManaChanged(float value) {
+            // BattleSystem.GetInstance().battleUI.
+        }
+        private void OnCharacterEnergyChanged(float value) {
+            // BattleSystem.GetInstance().battleUI.
+        }
 
         private void PlayAnimIdle() {
             characterBase.characterAnimator.PlayIdleAnimation();
         }
+
+        public void UseSkill(CharacterSkill characterSkill)
+        {
+            if (!characterMana.Consume(characterSkill.skillType)) return;
+            characterSkill.Execute();
+        }
         
-        public void Attack(CharacterBattle targetCharacterBattle, Action onAttackComplete) {
+        public void RestoreMana(int gemsCount, Action onComplete)
+        {
+            DamagePopup.Create(GetPosition(), gemsCount, false);
+            characterMana.Add(gemsCount * manaRestoreBase);
+        }
+
+        public void RestoreHp(int gemsCount, Action onComplete)
+        {
+            DamagePopup.Create(GetPosition(), gemsCount, false);
+            characterHealth.Heal(gemsCount * hpRestoreBase);
+        }
+
+        public void RestoreEnergy(int gemsCount, Action onComplete)
+        {
+            DamagePopup.Create(GetPosition(), gemsCount, false);
+            characterEnergy.Add(gemsCount * energyRestoreBase);
+        }
+        
+        public void Attack(int gemsCount, CharacterBattle targetCharacterBattle, Action onComplete) {
             Vector3 slideTargetPosition = targetCharacterBattle.GetPosition() + (GetPosition() - targetCharacterBattle.GetPosition()).normalized * 10f;
             Vector3 startingPosition = GetPosition();
 
@@ -74,7 +119,7 @@ namespace Character
                 Vector3 attackDir = (targetCharacterBattle.GetPosition() - GetPosition()).normalized;
                 characterBase.PlayAnimAttack(attackDir, () => {
                     // Target hit
-                    int damageAmount = UnityEngine.Random.Range(20, 50);
+                    int damageAmount = attackBase * gemsCount;
                     targetCharacterBattle.Damage(this, damageAmount);
                 }, () => {
                     // Attack completed, slide back
@@ -82,7 +127,7 @@ namespace Character
                         // Slide back completed, back to idle
                         state = State.Idle;
                         characterBase.characterAnimator.PlayIdleAnimation();
-                        onAttackComplete();
+                        onComplete();
                     });
                 });
             });
@@ -95,17 +140,17 @@ namespace Character
         public void Damage(CharacterBattle attacker, int damageAmount) {
             characterHealth.Damage(damageAmount);
             //CodeMonkey.CMDebug.TextPopup("Hit " + healthSystem.GetHealthAmount(), GetPosition());
-            Vector3 dirFromAttacker = (GetPosition() - attacker.GetPosition()).normalized;
+            // Vector3 dirFromAttacker = (GetPosition() - attacker.GetPosition()).normalized;
 
             DamagePopup.Create(GetPosition(), damageAmount, false);
             characterBase.SetColorTint(new Color(1, 0, 0, 1f));
-            Blood_Handler.SpawnBlood(GetPosition(), dirFromAttacker);
+            // Blood_Handler.SpawnBlood(GetPosition(), dirFromAttacker);
 
             UtilsClass.ShakeCamera(1f, .1f);
 
             if (characterHealth.IsDead()) {
                 // Died
-                characterBase.characterAnimator.PlayDieAnimation();
+                characterBase.characterAnimator.PlayDieAnimation(() => {}, () => {});
             }
         }
         
@@ -113,7 +158,7 @@ namespace Character
             this.slideTargetPosition = slideTargetPosition;
             this.onSlideComplete = onSlideComplete;
             state = State.Sliding;
-            characterBase.characterAnimator.PlaySlideAnimation();
+            characterBase.characterAnimator.PlaySlideAnimation(() => {}, onSlideComplete);
         }
         
         public Vector3 GetPosition() {

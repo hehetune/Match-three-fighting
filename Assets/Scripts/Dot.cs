@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Battle;
 using Patterns.ObserverPattern;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -74,7 +75,7 @@ public class Dot : MonoBehaviour, IObserver
     public void OnMouseDown()
     {
         Debug.Log("on mouse down");
-        if (GameManager.Ins.CurrentState == GameState.Move && GameManager.Ins.IsPlayerTurn)
+        if (BattleSystem.GetInstance().CanPlayerAction())
         {
             _firstTouchPosition = Input.mousePosition;
         }
@@ -84,7 +85,7 @@ public class Dot : MonoBehaviour, IObserver
     {
         Debug.Log("on mouse up");
 
-        if (GameManager.Ins.CurrentState == GameState.Move && GameManager.Ins.IsPlayerTurn)
+        if (BattleSystem.GetInstance().CanPlayerAction())
         {
             _finalTouchPosition = Input.mousePosition;
             CalculateAngle();

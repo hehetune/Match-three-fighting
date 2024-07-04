@@ -1,0 +1,87 @@
+{
+    "frames": {
+        "jiuweimingren_s-head.png": {
+            "frame": "{{0,118},{136,113}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{136,113}}",
+            "sourceSize": "{136,113}"
+        },
+        "jiuweimingren_s-head_hurt.png": {
+            "frame": "{{0,0},{136,116}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{136,116}}",
+            "sourceSize": "{136,116}"
+        },
+        "jiuweimingren_s-rightHand.png": {
+            "frame": "{{199,0},{26,33}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{26,33}}",
+            "sourceSize": "{26,33}"
+        },
+        "jiuweimingren_s-rightArm.png": {
+            "frame": "{{227,34},{22,25}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{22,25}}",
+            "sourceSize": "{22,25}"
+        },
+        "jiuweimingren_s-body.png": {
+            "frame": "{{138,0},{59,63}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{59,63}}",
+            "sourceSize": "{59,63}"
+        },
+        "jiuweimingren_s-leftHand.png": {
+            "frame": "{{227,0},{26,32}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{26,32}}",
+            "sourceSize": "{26,32}"
+        },
+        "jiuweimingren_s-leftArm.png": {
+            "frame": "{{199,35},{21,26}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{21,26}}",
+            "sourceSize": "{21,26}"
+        },
+        "jiuweimingren_s-rightLeg.png": {
+            "frame": "{{138,65},{18,25}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{18,25}}",
+            "sourceSize": "{18,25}"
+        },
+        "jiuweimingren_s-rightFoot.png": {
+            "frame": "{{222,61},{18,27}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{18,27}}",
+            "sourceSize": "{18,27}"
+        },
+        "jiuweimingren_s-leftLeg.png": {
+            "frame": "{{158,65},{16,22}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{16,22}}",
+            "sourceSize": "{16,22}"
+        },
+        "jiuweimingren_s-leftFoot.png": {
+            "frame": "{{199,63},{18,27}}",
+            "offset": "{0,0}",
+            "rotated": false,
+            "sourceColorRect": "{{0,0},{18,27}}",
+            "sourceSize": "{18,27}"
+        }
+    },
+    "metadata": {
+        "format": 2,
+        "realTextureFileName": "jiuweimingren.png",
+        "textureFileName": "jiuweimingren.png",
+        "size": "{256,256}"
+    }
+}

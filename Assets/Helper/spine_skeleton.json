@@ -1,0 +1,241 @@
+{
+    "skeleton": {
+        "hash": "",
+        "spine": "3.8.99",
+        "width": 0,
+        "height": 0,
+        "images": "",
+        "audio": ""
+    },
+    "bones": [
+        {
+            "name": "leftFoot",
+            "parent": "",
+            "length": 0,
+            "x": 9.65,
+            "y": -13.1,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "leftLeg",
+            "parent": "",
+            "length": 0,
+            "x": 7.25,
+            "y": -25.2,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "rightFoot",
+            "parent": "",
+            "length": 0,
+            "x": -9.5,
+            "y": -11.2,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "rightLeg",
+            "parent": "",
+            "length": 0,
+            "x": -10.1,
+            "y": -27.3,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "leftArm",
+            "parent": "",
+            "length": 0,
+            "x": 13.9,
+            "y": -55.35,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "leftHand",
+            "parent": "",
+            "length": 0,
+            "x": 21.4,
+            "y": -38.8,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "body",
+            "parent": "",
+            "length": 0,
+            "x": -0.55,
+            "y": -50.0,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "rightArm",
+            "parent": "",
+            "length": 0,
+            "x": -12.55,
+            "y": -56.3,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "rightHand",
+            "parent": "",
+            "length": 0,
+            "x": -18.55,
+            "y": -39.3,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "head_hurt",
+            "parent": "",
+            "length": 0,
+            "x": 6.75,
+            "y": -126.0,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        },
+        {
+            "name": "head",
+            "parent": "",
+            "length": 0,
+            "x": -8.65,
+            "y": -126.0,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shearX": 0,
+            "shearY": 0
+        }
+    ],
+    "slots": [
+        {
+            "name": "jiuweimingren_s-leftFoot",
+            "bone": "leftFoot",
+            "attachment": "jiuweimingren_s-leftFoot"
+        },
+        {
+            "name": "jiuweimingren_s-leftLeg",
+            "bone": "leftLeg",
+            "attachment": "jiuweimingren_s-leftLeg"
+        },
+        {
+            "name": "jiuweimingren_s-rightFoot",
+            "bone": "rightFoot",
+            "attachment": "jiuweimingren_s-rightFoot"
+        },
+        {
+            "name": "jiuweimingren_s-rightLeg",
+            "bone": "rightLeg",
+            "attachment": "jiuweimingren_s-rightLeg"
+        },
+        {
+            "name": "jiuweimingren_s-leftArm",
+            "bone": "leftArm",
+            "attachment": "jiuweimingren_s-leftArm"
+        },
+        {
+            "name": "jiuweimingren_s-leftHand",
+            "bone": "leftHand",
+            "attachment": "jiuweimingren_s-leftHand"
+        },
+        {
+            "name": "jiuweimingren_s-body",
+            "bone": "body",
+            "attachment": "jiuweimingren_s-body"
+        },
+        {
+            "name": "jiuweimingren_s-rightArm",
+            "bone": "rightArm",
+            "attachment": "jiuweimingren_s-rightArm"
+        },
+        {
+            "name": "jiuweimingren_s-rightHand",
+            "bone": "rightHand",
+            "attachment": "jiuweimingren_s-rightHand"
+        },
+        {
+            "name": "jiuweimingren_s-head_hurt",
+            "bone": "head_hurt",
+            "attachment": "jiuweimingren_s-head_hurt"
+        },
+        {
+            "name": "jiuweimingren_s-head",
+            "bone": "head",
+            "attachment": "jiuweimingren_s-head"
+        }
+    ],
+    "skins": {
+        "default": {
+            "attachments": {
+                "leftFoot": {
+                    "jiuweimingren_s-leftFoot": "jiuweimingren_s-leftFoot"
+                },
+                "leftLeg": {
+                    "jiuweimingren_s-leftLeg": "jiuweimingren_s-leftLeg"
+                },
+                "rightFoot": {
+                    "jiuweimingren_s-rightFoot": "jiuweimingren_s-rightFoot"
+                },
+                "rightLeg": {
+                    "jiuweimingren_s-rightLeg": "jiuweimingren_s-rightLeg"
+                },
+                "leftArm": {
+                    "jiuweimingren_s-leftArm": "jiuweimingren_s-leftArm"
+                },
+                "leftHand": {
+                    "jiuweimingren_s-leftHand": "jiuweimingren_s-leftHand"
+                },
+                "body": {
+                    "jiuweimingren_s-body": "jiuweimingren_s-body"
+                },
+                "rightArm": {
+                    "jiuweimingren_s-rightArm": "jiuweimingren_s-rightArm"
+                },
+                "rightHand": {
+                    "jiuweimingren_s-rightHand": "jiuweimingren_s-rightHand"
+                },
+                "head_hurt": {
+                    "jiuweimingren_s-head_hurt": "jiuweimingren_s-head_hurt"
+                },
+                "head": {
+                    "jiuweimingren_s-head": "jiuweimingren_s-head"
+                }
+            }
+        }
+    },
+    "animations": {}
+}

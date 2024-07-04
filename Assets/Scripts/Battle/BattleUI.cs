@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Battle
 {
-    public class BattleUI
+    public class BattleUI : MonoBehaviour
     {
         public List<SpriteRenderer> boardBorders = new();
 

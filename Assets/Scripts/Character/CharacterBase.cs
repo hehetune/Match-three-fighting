@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 
 namespace Character
 {
-    public abstract class CharacterBase : MonoBehaviour
+    public class CharacterBase : MonoBehaviour
     {
         public CharacterAnimator characterAnimator;
         private Color tintColor;
@@ -31,16 +31,7 @@ namespace Character
 
         public void PlayAnimAttack(Vector3 direction, Action onHit, Action onComplete)
         {
-            StartCoroutine(PlayAttackAnimation(onHit, onComplete));
-        }
-
-        private IEnumerator PlayAttackAnimation(Action onHit, Action onComplete)
-        {
-            characterAnimator.PlayNormalAttackAnimation();
-            yield return new WaitForSeconds(characterAnimator.normalAttackDelay);
-            onHit();
-            yield return new WaitForSeconds(characterAnimator.normalAttackDuration);
-            onComplete();
+            characterAnimator.PlayNormalAttackAnimation(onHit, onComplete);
         }
     }
 }

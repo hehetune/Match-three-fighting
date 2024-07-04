@@ -27,9 +27,9 @@ public class BattleHandler : MonoBehaviour {
     public Texture2D playerSpritesheet;
     public Texture2D enemySpritesheet;
 
-    private CharacterBattle playerCharacterBattle;
-    private CharacterBattle enemyCharacterBattle;
-    private CharacterBattle activeCharacterBattle;
+    private CharacterBattlee _playerCharacterBattlee;
+    private CharacterBattlee _enemyCharacterBattlee;
+    private CharacterBattlee _activeCharacterBattlee;
     private State state;
 
     private enum State {
@@ -42,10 +42,10 @@ public class BattleHandler : MonoBehaviour {
     }
 
     private void Start() {
-        playerCharacterBattle = SpawnCharacter(true);
-        enemyCharacterBattle = SpawnCharacter(false);
+        _playerCharacterBattlee = SpawnCharacter(true);
+        _enemyCharacterBattlee = SpawnCharacter(false);
 
-        SetActiveCharacterBattle(playerCharacterBattle);
+        SetActiveCharacterBattle(_playerCharacterBattlee);
         state = State.WaitingForPlayer;
     }
 
@@ -53,14 +53,14 @@ public class BattleHandler : MonoBehaviour {
         if (state == State.WaitingForPlayer) {
             if (Input.GetKeyDown(KeyCode.Space)) {
                 state = State.Busy;
-                playerCharacterBattle.Attack(enemyCharacterBattle, () => {
+                _playerCharacterBattlee.Attack(_enemyCharacterBattlee, () => {
                     ChooseNextActiveCharacter();
                 });
             }
         }
     }
 
-    private CharacterBattle SpawnCharacter(bool isPlayerTeam) {
+    private CharacterBattlee SpawnCharacter(bool isPlayerTeam) {
         Vector3 position;
         if (isPlayerTeam) {
             position = new Vector3(-50, 0);
@@ -68,19 +68,19 @@ public class BattleHandler : MonoBehaviour {
             position = new Vector3(+50, 0);
         }
         Transform characterTransform = Instantiate(pfCharacterBattle, position, Quaternion.identity);
-        CharacterBattle characterBattle = characterTransform.GetComponent<CharacterBattle>();
-        characterBattle.Setup(isPlayerTeam);
+        CharacterBattlee characterBattlee = characterTransform.GetComponent<CharacterBattlee>();
+        characterBattlee.Setup(isPlayerTeam);
 
-        return characterBattle;
+        return characterBattlee;
     }
 
-    private void SetActiveCharacterBattle(CharacterBattle characterBattle) {
-        if (activeCharacterBattle != null) {
-            activeCharacterBattle.HideSelectionCircle();
+    private void SetActiveCharacterBattle(CharacterBattlee characterBattlee) {
+        if (_activeCharacterBattlee != null) {
+            _activeCharacterBattlee.HideSelectionCircle();
         }
 
-        activeCharacterBattle = characterBattle;
-        activeCharacterBattle.ShowSelectionCircle();
+        _activeCharacterBattlee = characterBattlee;
+        _activeCharacterBattlee.ShowSelectionCircle();
     }
 
     private void ChooseNextActiveCharacter() {
@@ -88,27 +88,27 @@ public class BattleHandler : MonoBehaviour {
             return;
         }
 
-        if (activeCharacterBattle == playerCharacterBattle) {
-            SetActiveCharacterBattle(enemyCharacterBattle);
+        if (_activeCharacterBattlee == _playerCharacterBattlee) {
+            SetActiveCharacterBattle(_enemyCharacterBattlee);
             state = State.Busy;
             
-            enemyCharacterBattle.Attack(playerCharacterBattle, () => {
+            _enemyCharacterBattlee.Attack(_playerCharacterBattlee, () => {
                 ChooseNextActiveCharacter();
             });
         } else {
-            SetActiveCharacterBattle(playerCharacterBattle);
+            SetActiveCharacterBattle(_playerCharacterBattlee);
             state = State.WaitingForPlayer;
         }
     }
 
     private bool TestBattleOver() {
-        if (playerCharacterBattle.IsDead()) {
+        if (_playerCharacterBattlee.IsDead()) {
             // Player dead, enemy wins
             //CodeMonkey.CMDebug.TextPopupMouse("Enemy Wins!");
             BattleOverWindow.Show_Static("Enemy Wins!");
             return true;
         }
-        if (enemyCharacterBattle.IsDead()) {
+        if (_enemyCharacterBattlee.IsDead()) {
             // Enemy dead, player wins
             //CodeMonkey.CMDebug.TextPopupMouse("Player Wins!");
             BattleOverWindow.Show_Static("Player Wins!");
