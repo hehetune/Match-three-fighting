@@ -44,9 +44,17 @@ namespace Battle
             state = State.WaitingForPlayer;
         }
 
+        public void Reset()
+        {
+            SetActiveCharacterBattle(playerCharacterBattle);
+            state = State.WaitingForPlayer;
+        }
+
         public bool CanPlayerAction()
         {
-            return activeCharacterBattle == playerCharacterBattle && state != State.Busy;
+            // return activeCharacterBattle == playerCharacterBattle && state != State.Busy;
+            // temp
+            return state != State.Busy;
         }
 
         public void SetStateBusy() => state = State.Busy;
@@ -102,7 +110,7 @@ namespace Battle
 
         private CharacterBattle SpawnCharacter(bool isPlayerTeam)
         {
-            var position = isPlayerTeam ? new Vector3(-50, 0) : new Vector3(+50, 0);
+            var position = isPlayerTeam ? new Vector3(-6.75f, -3) : new Vector3(+6.75f, -3);
 
             Transform characterTransform = Instantiate(pfCharacterBattle, position, Quaternion.identity);
             CharacterBattle characterBattle = characterTransform.GetComponent<CharacterBattle>();
@@ -129,6 +137,9 @@ namespace Battle
                 if (activeCharacterBattle == enemyCharacterBattle)
                 {
                     // TODO: enemy AI action
+                    
+                    // temp
+                    state = State.WaitingForPlayer;
                 }
                 else state = State.WaitingForPlayer;
             }
@@ -136,7 +147,10 @@ namespace Battle
             {
                 SetActiveCharacterBattle(enemyCharacterBattle);
                 // TODO: enemy AI action
-                state = State.Busy;
+                // state = State.Busy;
+                
+                // temp
+                state = State.WaitingForPlayer;
             }
             else
             {

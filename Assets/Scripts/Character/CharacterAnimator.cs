@@ -23,6 +23,11 @@ namespace Character
             _animator = GetComponent<Animator>();
         }
 
+        public void SetFaceDirection(bool facingRight)
+        {
+            _animator.SetFloat("FacingRight", facingRight ? 1 : 0);
+        }
+
         public void PlayIdleAnimation()
         {
             _animator.SetTrigger(IdleAnimKey);

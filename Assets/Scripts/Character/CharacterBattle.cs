@@ -31,13 +31,18 @@ namespace Character
         [SerializeField] private CharacterSkill skill2;
         [SerializeField] private CharacterSkill skill3;
         // private World_Bar healthBar;
+
+        protected bool facingRight;
         
         private void Awake() {
             characterBase = GetComponent<CharacterBase>();
             state = State.Idle;
         }
         
-        public void Setup(bool isPlayerTeam) {
+        public void Setup(bool isPlayerTeam)
+        {
+            this.facingRight = isPlayerTeam;
+            characterBase.characterAnimator.SetFaceDirection(isPlayerTeam);
             this.isPlayerTeam = isPlayerTeam;
             characterHealth = new CharacterHealth(100);
             characterMana = new CharacterMana(90);
@@ -61,7 +66,7 @@ namespace Character
                     transform.position += (slideTargetPosition - GetPosition()) * slideSpeed * Time.deltaTime;
 
                     float reachedDistance = 1f;
-                    if (Vector3.Distance(GetPosition(), slideTargetPosition) < reachedDistance) {
+                    if (Vector3.Distance(GetPosition(), slideTargetPosition) < 0.01f) {
                         // Arrived at Slide Target Position
                         //transform.position = slideTargetPosition;
                         onSlideComplete();
@@ -109,21 +114,28 @@ namespace Character
         }
         
         public void Attack(int gemsCount, CharacterBattle targetCharacterBattle, Action onComplete) {
-            Vector3 slideTargetPosition = targetCharacterBattle.GetPosition() + (GetPosition() - targetCharacterBattle.GetPosition()).normalized * 10f;
             Vector3 startingPosition = GetPosition();
+            // Vector3 slideTargetPosition = targetCharacterBattle.GetPosition() + (startingPosition - targetCharacterBattle.GetPosition()).normalized * 10f;
+            Vector3 slideTargetPosition = targetCharacterBattle.GetPosition() + (startingPosition - targetCharacterBattle.GetPosition()).normalized * 2f;
+            // Vector3 slideTargetPosition = targetCharacterBattle.GetPosition();
+            Debug.Log(startingPosition);
+            Debug.Log(slideTargetPosition);
 
             // Slide to Target
             SlideToPosition(slideTargetPosition, () => {
                 // Arrived at Target, attack him
                 state = State.Busy;
-                Vector3 attackDir = (targetCharacterBattle.GetPosition() - GetPosition()).normalized;
+                Vector3 attackDir = slideTargetPosition.normalized;
                 characterBase.PlayAnimAttack(attackDir, () => {
                     // Target hit
                     int damageAmount = attackBase * gemsCount;
                     targetCharacterBattle.Damage(this, damageAmount);
-                }, () => {
+                }, () =>
+                {
+                    ReverseFacingDirection();
                     // Attack completed, slide back
                     SlideToPosition(startingPosition, () => {
+                        ReverseFacingDirection();
                         // Slide back completed, back to idle
                         state = State.Idle;
                         characterBase.characterAnimator.PlayIdleAnimation();
@@ -131,6 +143,12 @@ namespace Character
                     });
                 });
             });
+        }
+
+        private void ReverseFacingDirection()
+        {
+            facingRight = !facingRight;
+            characterBase.characterAnimator.SetFaceDirection(facingRight);
         }
         
         public bool IsDead() {
@@ -143,10 +161,10 @@ namespace Character
             // Vector3 dirFromAttacker = (GetPosition() - attacker.GetPosition()).normalized;
 
             DamagePopup.Create(GetPosition(), damageAmount, false);
-            characterBase.SetColorTint(new Color(1, 0, 0, 1f));
+            // characterBase.SetColorTint(new Color(1, 0, 0, 1f));
             // Blood_Handler.SpawnBlood(GetPosition(), dirFromAttacker);
 
-            UtilsClass.ShakeCamera(1f, .1f);
+            // UtilsClass.ShakeCamera(1f, .1f);
 
             if (characterHealth.IsDead()) {
                 // Died

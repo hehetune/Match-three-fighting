@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
     {
         Reset();
         boardManager.Initialize();
+        battleSystem.Reset();
     }
 
     private void Reset()
