@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Character;
+using UI;
 using UnityEngine;
 
 namespace Battle
@@ -22,7 +24,7 @@ namespace Battle
         private State state;
         private int bonusRounds = 0;
 
-        public BattleUI battleUI;
+        private Coroutine decreaseEnergyCoroutine;
 
         private enum State
         {
@@ -46,8 +48,16 @@ namespace Battle
 
         public void Reset()
         {
+            playerCharacterBattle.Reset();
+            enemyCharacterBattle.Reset();
             SetActiveCharacterBattle(playerCharacterBattle);
             state = State.WaitingForPlayer;
+        }
+
+        private void StartDecreasePlayerEnergy()
+        {
+            if(decreaseEnergyCoroutine!=null) StopCoroutine(decreaseEnergyCoroutine);
+            decreaseEnergyCoroutine = StartCoroutine(DecreaseEnergyCoroutine());
         }
 
         public bool CanPlayerAction()
@@ -57,7 +67,20 @@ namespace Battle
             return state != State.Busy;
         }
 
-        public void SetStateBusy() => state = State.Busy;
+        private IEnumerator DecreaseEnergyCoroutine()
+        {
+            while (activeCharacterBattle != null)
+            {
+                activeCharacterBattle.DecreaseEnergyByOneUnit();
+                yield return 1f.Wait();
+            }
+        }
+
+        public void PlayerPerformedTurn()
+        {
+            state = State.Busy;
+            if(decreaseEnergyCoroutine!=null) StopCoroutine(decreaseEnergyCoroutine);
+        }
 
         public void PerformPlayerTurn(MatchResult result)
         {
@@ -65,47 +88,48 @@ namespace Battle
                 activeCharacterBattle == playerCharacterBattle ? enemyCharacterBattle : playerCharacterBattle);
         }
 
+        private Queue<Action> _playerActionsCache = new();
+
+        private void ExecuteActionQueue()
+        {
+            if (_playerActionsCache.Count > 0)
+            {
+                var action = _playerActionsCache.Dequeue();
+                action();
+            }
+            else
+            {
+                ChooseNextActiveCharacter();
+            }
+        }
+
         public void PerformPlayerAction(MatchResult result, CharacterBattle mainCharacter,
             CharacterBattle targetCharacter)
         {
-            void ExecuteActionQueue(Queue<Action> actions)
-            {
-                if (actions.Count > 0)
-                {
-                    var action = actions.Dequeue();
-                    action();
-                }
-                else
-                {
-                    ChooseNextActiveCharacter();
-                }
-            }
-
-            Queue<Action> actions = new Queue<Action>();
-
+            _playerActionsCache = new Queue<Action>();
             if (result.numberSword > 0)
             {
-                actions.Enqueue(() =>
-                    mainCharacter.Attack(result.numberSword, targetCharacter, () => ExecuteActionQueue(actions)));
+                _playerActionsCache.Enqueue(() =>
+                    mainCharacter.Attack(result.numberSword, targetCharacter, ExecuteActionQueue));
             }
 
             if (result.numberHp > 0)
             {
-                actions.Enqueue(() => mainCharacter.RestoreHp(result.numberHp, () => ExecuteActionQueue(actions)));
+                _playerActionsCache.Enqueue(() => mainCharacter.RestoreHp(result.numberHp, ExecuteActionQueue));
             }
 
             if (result.numberMana > 0)
             {
-                actions.Enqueue(() => mainCharacter.RestoreMana(result.numberMana, () => ExecuteActionQueue(actions)));
+                _playerActionsCache.Enqueue(() => mainCharacter.RestoreMana(result.numberMana, ExecuteActionQueue));
             }
 
             if (result.numberEnergy > 0)
             {
-                actions.Enqueue(() =>
-                    mainCharacter.RestoreEnergy(result.numberEnergy, () => ExecuteActionQueue(actions)));
+                _playerActionsCache.Enqueue(() =>
+                    mainCharacter.RestoreEnergy(result.numberEnergy, ExecuteActionQueue));
             }
 
-            ExecuteActionQueue(actions);
+            ExecuteActionQueue();
         }
 
         private CharacterBattle SpawnCharacter(bool isPlayerTeam)
@@ -122,6 +146,7 @@ namespace Battle
         private void SetActiveCharacterBattle(CharacterBattle characterBattle)
         {
             activeCharacterBattle = characterBattle;
+            StartDecreasePlayerEnergy();
         }
 
         private void ChooseNextActiveCharacter()
@@ -137,7 +162,7 @@ namespace Battle
                 if (activeCharacterBattle == enemyCharacterBattle)
                 {
                     // TODO: enemy AI action
-                    
+
                     // temp
                     state = State.WaitingForPlayer;
                 }
@@ -148,13 +173,14 @@ namespace Battle
                 SetActiveCharacterBattle(enemyCharacterBattle);
                 // TODO: enemy AI action
                 // state = State.Busy;
-                
+                UIManager.GetInstance().BattleUI.UpdateBorderColor(false);
                 // temp
                 state = State.WaitingForPlayer;
             }
             else
             {
                 SetActiveCharacterBattle(playerCharacterBattle);
+                UIManager.GetInstance().BattleUI.UpdateBorderColor(true);
                 state = State.WaitingForPlayer;
             }
         }

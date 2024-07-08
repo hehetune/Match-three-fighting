@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Character
 {
@@ -8,7 +9,7 @@ namespace Character
         public bool CanUseSkill2 => value / valueMax >= 2 / 3;
         public bool CanUseSkill3 => value / valueMax == 1;
 
-        public CharacterMana(int valueMax) : base(valueMax)
+        public CharacterMana(int valueMax) : base(valueMax, false)
         {
         }
 

@@ -8,17 +8,19 @@ namespace Character
     [Serializable]
     public class CustomAnimation
     {
+        public string name;
         public float triggerDelay = 0;
         public AnimationClip clip;
 
-        public void PlayAnimation(Action playAnim, [CanBeNull] Action onTrigger, [CanBeNull] Action onComplete)
+        public void TriggerAnimation(Animator animator, [CanBeNull] Action onTrigger, [CanBeNull] Action onComplete)
         {
-            CoroutineRunner.Instance.RunCoroutine(PlayCoroutine(playAnim, onTrigger, onComplete));
+            CoroutineRunner.Instance.RunCoroutine(TriggerCoroutine(animator, onTrigger, onComplete));
         }
 
-        private IEnumerator PlayCoroutine(Action playAnim, [CanBeNull] Action onTrigger, [CanBeNull] Action onComplete)
+        private IEnumerator TriggerCoroutine(Animator animator, [CanBeNull] Action onTrigger, [CanBeNull] Action onComplete)
         {
-            playAnim?.Invoke();
+            animator.ResetTrigger(name);
+            animator.SetTrigger(name);
             yield return triggerDelay.Wait();
             onTrigger?.Invoke();
             yield return (clip.length - triggerDelay).Wait();

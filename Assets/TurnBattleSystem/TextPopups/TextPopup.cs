@@ -16,16 +16,25 @@ using UnityEngine;
 using TMPro;
 using CodeMonkey.Utils;
 
-public class DamagePopup : MonoBehaviour {
+public enum TextPopupType
+{
+    Damage = 0,
+    CriticalDamage = 1,
+    HealHp = 2,
+    RegenMana = 3,
+    RegenEnergy = 4,
+} 
+public class TextPopup : MonoBehaviour {
+    
 
     // Create a Damage Popup
-    public static DamagePopup Create(Vector3 position, int damageAmount, bool isCriticalHit) {
+    public static TextPopup Create(Vector3 position, string text, TextPopupType type) {
         Transform damagePopupTransform = Instantiate(GameAssets.i.pfDamagePopup, position, Quaternion.identity);
 
-        DamagePopup damagePopup = damagePopupTransform.GetComponent<DamagePopup>();
-        damagePopup.Setup(damageAmount, isCriticalHit);
+        TextPopup textPopup = damagePopupTransform.GetComponent<TextPopup>();
+        textPopup.Setup(text, type);
 
-        return damagePopup;
+        return textPopup;
     }
 
     private static int sortingOrder = 10000;
@@ -41,37 +50,55 @@ public class DamagePopup : MonoBehaviour {
         textMesh = transform.GetComponent<TextMeshPro>();
     }
 
-    public void Setup(int damageAmount, bool isCriticalHit) {
-        textMesh.SetText(damageAmount.ToString());
-        if (!isCriticalHit) {
-            // Normal hit
-            textMesh.fontSize = 36;
-            textColor = UtilsClass.GetColorFromString("FFC500");
-        } else {
-            // Critical hit
-            textMesh.fontSize = 45;
-            textColor = UtilsClass.GetColorFromString("FF2B00");
+    public void Setup(string text, TextPopupType type) {
+        textMesh.SetText(text);
+        switch (type)
+        {
+            case TextPopupType.Damage:
+                textMesh.fontSize = 7;
+                textColor = UtilsClass.GetColorFromString("FFC500");
+                moveVector = new Vector3(0, 1) * 10f;
+                break;
+            case TextPopupType.CriticalDamage:
+                textMesh.fontSize = 9;
+                textColor = UtilsClass.GetColorFromString("FF2B00");
+                moveVector = new Vector3(0, 1) * 10f;
+                break;
+            case TextPopupType.HealHp:
+                textMesh.fontSize = 7;
+                textColor = UtilsClass.GetColorFromString("cf4f3e");
+                moveVector = new Vector3(0, 1) * 10f;
+                break;
+            case TextPopupType.RegenMana:
+                textMesh.fontSize = 7;
+                textColor = UtilsClass.GetColorFromString("48a3d4");
+                moveVector = new Vector3(0, 1) * 10f;
+                break;
+            case TextPopupType.RegenEnergy:
+                textMesh.fontSize = 7;
+                textColor = UtilsClass.GetColorFromString("69d448");
+                moveVector = new Vector3(0, 1) * 10f;
+                break;
+            default: break;
         }
         textMesh.color = textColor;
         disappearTimer = DISAPPEAR_TIMER_MAX;
 
         sortingOrder++;
         textMesh.sortingOrder = sortingOrder;
-
-        moveVector = new Vector3(.7f, 1) * 60f;
     }
 
     private void Update() {
         transform.position += moveVector * Time.deltaTime;
-        moveVector -= moveVector * 8f * Time.deltaTime;
+        moveVector -= moveVector * 1f * Time.deltaTime;
 
         if (disappearTimer > DISAPPEAR_TIMER_MAX * .5f) {
             // First half of the popup lifetime
-            float increaseScaleAmount = 1f;
+            float increaseScaleAmount = 0.1f;
             transform.localScale += Vector3.one * increaseScaleAmount * Time.deltaTime;
         } else {
             // Second half of the popup lifetime
-            float decreaseScaleAmount = 1f;
+            float decreaseScaleAmount = 0.1f;
             transform.localScale -= Vector3.one * decreaseScaleAmount * Time.deltaTime;
         }
 

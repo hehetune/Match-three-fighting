@@ -8,15 +8,16 @@ namespace Character
     {
         private Animator _animator;
         private static readonly int IdleAnimKey = Animator.StringToHash("Idle");
-        private static readonly int SlideAnimKey = Animator.StringToHash("Slide");
-        private static readonly int NormalAttackAnimKey = Animator.StringToHash("NormalAttack");
-        private static readonly int HurtAnimKey = Animator.StringToHash("Hurt");
-        private static readonly int DieAnimKey = Animator.StringToHash("Die");
+        // private static readonly int SlideAnimKey = Animator.StringToHash("Slide");
+        // private static readonly int NormalAttackAnimKey = Animator.StringToHash("NormalAttack");
+        // private static readonly int HurtAnimKey = Animator.StringToHash("Hurt");
+        // private static readonly int DieAnimKey = Animator.StringToHash("Die");
         
         [SerializeField] private CustomAnimation SlideAnimation;
         [SerializeField] private CustomAnimation NormalAttackAnimation;
         [SerializeField] private CustomAnimation HurtAnimation;
         [SerializeField] private CustomAnimation DieAnimation;
+        [SerializeField] private CustomAnimation HealAnimation;
 
         private void Awake()
         {
@@ -33,24 +34,29 @@ namespace Character
             _animator.SetTrigger(IdleAnimKey);
         }
         
-        public void PlaySlideAnimation(Action onTrigger,Action onComplete)
+        public void PlaySlideAnimation([CanBeNull] Action onTrigger,[CanBeNull] Action onComplete)
         {
-            SlideAnimation.PlayAnimation(() => _animator.SetTrigger(SlideAnimKey), onTrigger, onComplete);
+            SlideAnimation.TriggerAnimation(_animator, onTrigger, onComplete);
         }
 
-        public void PlayNormalAttackAnimation(Action onTrigger,Action onComplete)
+        public void PlayNormalAttackAnimation([CanBeNull] Action onTrigger,[CanBeNull] Action onComplete)
         {
-            NormalAttackAnimation.PlayAnimation(() => _animator.SetTrigger(NormalAttackAnimKey), onTrigger, onComplete);
+            NormalAttackAnimation.TriggerAnimation(_animator, onTrigger, onComplete);
         }
 
-        public void PlayHurtAnimation(Action onTrigger,Action onComplete)
+        public void PlayHurtAnimation([CanBeNull] Action onTrigger,[CanBeNull] Action onComplete)
         {
-            NormalAttackAnimation.PlayAnimation(() => _animator.SetTrigger(HurtAnimKey), onTrigger, onComplete);
+            HurtAnimation.TriggerAnimation(_animator, onTrigger, onComplete);
         }
 
-        public void PlayDieAnimation(Action onTrigger,Action onComplete)
+        public void PlayDieAnimation([CanBeNull] Action onTrigger,[CanBeNull] Action onComplete)
         {
-            NormalAttackAnimation.PlayAnimation(() => _animator.SetTrigger(DieAnimKey), onTrigger, onComplete);
+            DieAnimation.TriggerAnimation(_animator, onTrigger, onComplete);
+        }
+        
+        public void PlayHealAnimation([CanBeNull] Action onTrigger,[CanBeNull] Action onComplete)
+        {
+            HealAnimation.TriggerAnimation(_animator, onTrigger, onComplete);
         }
 
     }

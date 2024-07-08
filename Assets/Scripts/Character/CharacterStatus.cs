@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Character
 {
@@ -10,14 +11,13 @@ namespace Character
         protected int valueMax;
         protected int value;
 
-        public CharacterStatus(int valueMax) {
-            this.valueMax = valueMax;
-            value = valueMax;
-        }
+        protected bool defaultMax;
 
-        public virtual void SetValueAmount(int value) {
-            this.value = value;
-            if (OnValueChanged != null) OnValueChanged(GetValuePercent());
+        public CharacterStatus(int valueMax, bool defaultMax = true)
+        {
+            this.defaultMax = defaultMax; 
+            this.valueMax = valueMax;
+            value = defaultMax ? valueMax : 0;
         }
 
         public virtual float GetValuePercent() {
@@ -28,24 +28,31 @@ namespace Character
             return value;
         }
 
+        public virtual void Reset()
+        {
+            value = defaultMax ? valueMax : 0;
+            OnValueChanged?.Invoke(GetValuePercent());
+        }
+
         public virtual void Subtract(int amount) {
             value -= amount;
             if (value < 0) {
                 value = 0;
             }
-            if (OnValueChanged != null) OnValueChanged(GetValuePercent());
+            OnValueChanged?.Invoke(GetValuePercent());
         }
 
         public virtual void Add(int amount) {
             value += amount;
+            
             if (value > valueMax) {
                 value = valueMax;
             }
-            if (OnValueChanged != null) OnValueChanged(GetValuePercent());
+            OnValueChanged?.Invoke(GetValuePercent());
         }
         
         protected void TriggerOnValueChanged() {
-            if (OnValueChanged != null) OnValueChanged(GetValuePercent());
+            OnValueChanged?.Invoke(GetValuePercent());
         }
     }
 }

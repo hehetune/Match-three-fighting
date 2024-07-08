@@ -100,7 +100,7 @@ public class CharacterBattlee : MonoBehaviour {
         //CodeMonkey.CMDebug.TextPopup("Hit " + healthSystem.GetHealthAmount(), GetPosition());
         Vector3 dirFromAttacker = (GetPosition() - attacker.GetPosition()).normalized;
 
-        DamagePopup.Create(GetPosition(), damageAmount, false);
+        TextPopup.Create(GetPosition(), damageAmount.ToString(), TextPopupType.Damage);
         characterBase.SetColorTint(new Color(1, 0, 0, 1f));
         Blood_Handler.SpawnBlood(GetPosition(), dirFromAttacker);
 

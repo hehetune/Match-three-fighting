@@ -186,14 +186,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SlideAnimation:
+    name: Slide
     triggerDelay: 0
     clip: {fileID: 7400000, guid: b7796485fc575874d947476424c67231, type: 2}
   NormalAttackAnimation:
+    name: NormalAttack
     triggerDelay: 0
     clip: {fileID: 7400000, guid: 803198a13c208a045a8fa6e81026b0db, type: 2}
   HurtAnimation:
+    name: Hurt
     triggerDelay: 0
     clip: {fileID: 7400000, guid: 61063a6dacf3e714faf8532df78b37d2, type: 2}
   DieAnimation:
+    name: Die
     triggerDelay: 0
     clip: {fileID: 7400000, guid: c614e35ebb5a1d54b904ec4f367ad277, type: 2}
+  HealAnimation:
+    name: Heal
+    triggerDelay: 0
+    clip: {fileID: 7400000, guid: 340b9de4ac8432541b2f020990dee525, type: 2}

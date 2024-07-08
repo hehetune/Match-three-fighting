@@ -142,7 +142,7 @@ public class BoardManager : MonoBehaviour
 
         if (_secondDot == null) return;
 
-        BattleSystem.GetInstance().SetStateBusy();
+        BattleSystem.GetInstance().PlayerPerformedTurn();
 
         SwapDotsAndUpdatePosition(_firstDot, _secondDot);
 
